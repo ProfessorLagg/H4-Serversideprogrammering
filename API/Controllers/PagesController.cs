@@ -1,7 +1,11 @@
 ﻿using API.Data;
+using API.Data.Model;
 using API.Services;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+using static API.Services.H4AuthService;
 
 namespace API.Controllers {
     [Route("pages")]
@@ -35,7 +39,7 @@ namespace API.Controllers {
 
         [HttpGet("login")]
         public async Task<IActionResult> LoginPage() {
-            return await GetPageContentResult("Login");
+            return await GetPageContentResult("login");
         }
 
         [HttpGet("home")]
@@ -43,12 +47,32 @@ namespace API.Controllers {
             string? authHeader = Request.Headers.Authorization;
             if (authHeader is null) { return await LoginPage(); }
             string tokenString = authHeader.Substring(authHeader.IndexOf(' ') + 1);
-            Guid token = Guid.Parse(tokenString);
-            bool validToken = await _authService.ValidateSessionToken(token);
-            if (!validToken) { return await LoginPage(); }
+            if (!Guid.TryParse(tokenString, out Guid token)) { return await LoginPage(); }
+            ValidateSessionTokenResult validateResult = await _authService.ValidateSessionToken(token);
+            if (!validateResult.Valid) { return await LoginPage(); }
+
+            if (validateResult.Session is null) { return StatusCode(500, "Could not fetch validated session"); }
+            Account? account = await _dbContext.Accounts.FirstOrDefaultAsync(acc => acc.Id == validateResult.Session.AccountId);
+            if (account is null) { return StatusCode(500, "Could not find session account"); }
+
+            if (account.Cpr is null) { return await CprPage(); }
+
+            return await GetPageContentResult("home");
+        }
+
+        [HttpGet("cpr")]
+        public async Task<IActionResult> CprPage() {
+            string? authHeader = Request.Headers.Authorization;
+            if (authHeader is null) { return await LoginPage(); }
+            string tokenString = authHeader.Substring(authHeader.IndexOf(' ') + 1);
+            if (!Guid.TryParse(tokenString, out Guid token)) { return await LoginPage(); }
+            ValidateSessionTokenResult validateResult = await _authService.ValidateSessionToken(token);
+            if (!validateResult.Valid) { return await LoginPage(); }
 
 
-            return await GetPageContentResult("Home");
+
+
+            return await GetPageContentResult("cpr");
         }
 
     }

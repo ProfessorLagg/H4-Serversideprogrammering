@@ -27,13 +27,16 @@ namespace API.Services {
             AccountSession result = addResult.Entity;
             return result;
         }
-        public async Task<bool> ValidateSessionToken(Guid token) {
+
+        public sealed record class ValidateSessionTokenResult(bool Valid, AccountSession? Session);
+        public async Task<ValidateSessionTokenResult> ValidateSessionToken(Guid token) {
             AccountSession? session = await _dbContext.AccountSessions.FirstOrDefaultAsync(x => x.Token == token && x.Active);
-            if (session is null) { return false; }
+            if (session is null) { return new ValidateSessionTokenResult(false, null); }
 
             session.LastAuthenticated = DateTime.UtcNow;
+            var updateResult = _dbContext.Update(session);
             await _dbContext.SaveChangesAsync();
-            return true;
+            return new ValidateSessionTokenResult(true, updateResult.Entity);
         }
         public async Task<AccountSession> GetOrCreateSessionAsync(Account account) {
             if (account == null) { throw new ArgumentNullException(nameof(account)); }

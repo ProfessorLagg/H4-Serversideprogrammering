@@ -1,0 +1,22 @@
+<div class="center-content-horizontal">
+    <div class="center-content-vertical">
+        <h3>Indtast Vendligst dit CPR nummer</h3>
+        <br />
+        <input type="text" id="input-cpr">
+        <br/>
+        <input type="button" value="Submit" hx-put="/"/>
+    </div>
+</div>
+<script>
+    const inputCpr = document.getElementById('input-cpr');
+    //const submitCpr = document.getElementById('input-cpr');
+    inputCpr.addEventListener("input", e => {
+        let newValue = formatCPR(inputCpr.value);
+        console.log("new cpr value:", newValue);
+        inputCpr.value = newValue;
+    });
+
+    if (getSessionToken() === undefined) {
+        logoutButton.style.display = "none";
+    }
+</script>

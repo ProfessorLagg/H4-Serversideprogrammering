@@ -1,25 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Document</title>
-		<script src="https://unpkg.com/htmx.org@2.0.2"></script>
-		<script src="/js/root.js"></script>
-		<link rel="stylesheet" href="css/root.css" />
-		<link rel="stylesheet" href="css/index.css" />
-	</head>
-	<body>
-		<div id="body-wrap">
-			<div id="nav-bar"></div>
-			<div id="page-wrap" hx-get="pages/home" hx-trigger="load" hx-swap="innerHtml"></div>
-		</div>
-		<script>
-			document.body.addEventListener("htmx:configRequest", function (evt) {
-				const sessionToken = getSessionToken();
-				evt.detail.parameters["auth_token"] = sessionToken; // add a new parameter into the request
-				evt.detail.headers["Authorization"] = `Lagg ${sessionToken}`; // add a new header into the request
-			});
-		</script>
-	</body>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+    <script src="/js/root.js"></script>
+    <link rel="stylesheet" href="css/root.css" />
+    <link rel="stylesheet" href="css/index.css" />
+</head>
+<body>
+    <div id="body-wrap">
+        <div id="nav-bar">
+            <input type="button"  value="Logout" id="logout-button" />
+        </div>
+        <div id="page-wrap" hx-get="pages/home" hx-trigger="load" hx-swap="innerHtml"></div>
+    </div>
+    <script>
+        const logoutButton = document.getElementById('logout-button');
+        document.body.addEventListener("htmx:configRequest", function (evt) {
+            const sessionToken = getSessionToken();
+            if (sessionToken === undefined || sessionToken === null) { return; }
+            //evt.detail.parameters["auth_token"] = sessionToken; // add a new parameter into the request
+            evt.detail.headers["Authorization"] = `Lagg ${sessionToken}`; // add a new header into the request
+        });
+
+        logoutButton.addEventListener("click", (e) => {
+            killSession();
+            logoutButton.style.display = "none";
+        });
+
+        if (getSessionToken() === undefined) {
+            logoutButton.style.display = "none";
+        }
+    </script>
+</body>
 </html>
