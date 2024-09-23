@@ -1,18 +1,20 @@
-using System.Security.Authentication;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.SqlServer;
-using Microsoft.EntityFrameworkCore.Design;
 using API.Data;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
+using API.Services;
+
+using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.EntityFrameworkCore;
+
+using System.Security.Authentication;
 namespace API {
     public class Program {
         public static void Main(string[] args) {
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
+            builder.Services.AddScoped<IPageContentService, FilePageContentService>();
+            builder.Services.AddScoped<H4AuthService>();
             builder.Services.AddControllers().AddJsonOptions(options => {
-                options.JsonSerializerOptions.IncludeFields = true;
+                options.JsonSerializerOptions.IncludeFields = true; // How and why this is not on by default pains me to no end
 #if DEBUG
                 options.JsonSerializerOptions.WriteIndented = true;
 #endif
@@ -21,6 +23,17 @@ namespace API {
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddAuthentication();
+            builder.Services.AddHttpLogging(options => {
+                options.LoggingFields =
+                    HttpLoggingFields.RequestPath
+                    | HttpLoggingFields.RequestQuery
+                    | HttpLoggingFields.RequestHeaders
+                    | HttpLoggingFields.ResponseStatusCode
+                    | HttpLoggingFields.ResponseHeaders;
+#if DEBUG
+                options.LoggingFields = options.LoggingFields | HttpLoggingFields.RequestBody | HttpLoggingFields.ResponseBody;
+#endif
+            });
 
             string? connectionString = builder.Configuration.GetConnectionString("Default");
             builder.Services.AddDbContext<H4serversideTodoContext>(options =>

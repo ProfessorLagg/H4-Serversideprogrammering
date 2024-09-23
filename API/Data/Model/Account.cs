@@ -11,5 +11,7 @@ public partial class Account
 
     public string? Cpr { get; set; }
 
+    public string PasswordHash { get; set; } = null!;
+
     public virtual ICollection<TodoItem> TodoItems { get; set; } = new List<TodoItem>();
 }

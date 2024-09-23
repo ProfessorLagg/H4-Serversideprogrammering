@@ -9,7 +9,7 @@ public partial class TodoItem
 
     public string Title { get; set; } = null!;
 
-    public int UserId { get; set; }
+    public int AccountId { get; set; }
 
-    public virtual Account User { get; set; } = null!;
+    public virtual Account Account { get; set; } = null!;
 }

@@ -1,1 +1,1 @@
-Scaffold-DbContext 'Name=ConnectionStrings:Default' Microsoft.EntityFrameworkCore.SqlServer -ContextDir 'Data' -OutputDir 'Data\Model'
+Scaffold-DbContext 'Name=ConnectionStrings:Default' Microsoft.EntityFrameworkCore.SqlServer -ContextDir 'Data' -OutputDir 'Data\Model' -Force

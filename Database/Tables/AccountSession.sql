@@ -1,7 +1,7 @@
 ﻿CREATE TABLE [dbo].[AccountSession]
 (
 	[Id] INT NOT NULL PRIMARY KEY,
-    [UserId] INT NOT NULL,
+    [AccountId] INT NOT NULL,
     [Active] BIT NOT NULL ,
     [Created] DATETIME NOT NULL DEFAULT GETDATE(),
     [Expires] DATETIME NOT NULL DEFAULT GETDATE() + '01:00:00'

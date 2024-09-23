@@ -1,10 +1,25 @@
-﻿<h3>Please Log In</h3>
-<form action="post">
-    <label for="username">Username</label>
-    <input type="text">
+﻿<style>
+    #login-form-wrap {
+        display: flex;
+        justify-content: center;
+    }
+</style>
 
-    <label for="password">password</label>
-    <input type="password">
+<h1 style="width: 100%;text-align: center;">Log In</h1>
+<br />
+<div id="login-form-wrap">
 
-    <input type="submit">
-</form>
+    <form action="post" id="login-form">
+        <label for="username">Username</label>
+        <br />
+        <input type="text">
+        <br />
+        <label for="password">Password</label>
+        <br />
+        <input type="password">
+        <br />
+        <input type="submit">
+    </form>
+</div>
+
+<script src="js/login.js" />

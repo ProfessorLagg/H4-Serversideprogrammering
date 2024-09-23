@@ -1,6 +1,5 @@
 ﻿using API.Data;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers {
@@ -18,6 +17,9 @@ namespace API.Controllers {
         public IActionResult GetWebRootPath() {
             return StatusCode(200, _environment.WebRootPath);
         }
-
+        [HttpGet("ContentRootPath")]
+        public IActionResult GetContentRootPath() {
+            return StatusCode(200, _environment.ContentRootPath);
+        }
     }
 }

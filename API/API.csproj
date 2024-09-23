@@ -22,13 +22,9 @@
 	</ItemGroup>
 	
 	<ItemGroup>
+		<Folder Include="Utils\" />
 		<Folder Include="wwwroot"></Folder>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Content Include="Pages\**">
-			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
+		<Folder Include="Pages"></Folder>
 	</ItemGroup>
 
 
