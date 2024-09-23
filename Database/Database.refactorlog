@@ -14,4 +14,11 @@
     <Property Name="ParentElementType" Value="SqlSchema" />
     <Property Name="NewName" Value="[Account]" />
   </Operation>
+  <Operation Name="Rename Refactor" Key="2fb78a51-69f3-4de8-b670-a052cb0530a3" ChangeDateTime="09/23/2024 09:01:34">
+    <Property Name="ElementName" Value="[dbo].[Sessions].[ActiveUntil]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[dbo].[Sessions]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="LastUsed" />
+  </Operation>
 </Operations>
