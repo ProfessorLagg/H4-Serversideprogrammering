@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.EntityFrameworkCore.Design;
+using API.Data;
 namespace API {
     public class Program {
         public static void Main(string[] args) {
@@ -8,10 +9,20 @@ namespace API {
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers().AddJsonOptions(options => {
+                options.JsonSerializerOptions.IncludeFields = true;
+#if DEBUG
+                options.JsonSerializerOptions.WriteIndented = true;
+#endif
+            });
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddAuthentication();
+            string? connectionString = builder.Configuration.GetConnectionString("Default");
+            builder.Services.AddDbContext<H4serversideTodoContext>(options =>
+                options.UseSqlServer(connectionString)
+            );
 
             var app = builder.Build();
 

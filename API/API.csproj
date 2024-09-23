@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\Model\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
