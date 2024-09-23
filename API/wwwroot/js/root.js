@@ -20,9 +20,3 @@ async function digestMessage_SHA384(message) {
 function getSessionToken(){
     return localStorage.getItem("sessionToken")
 }
-
-document.body.addEventListener('htmx:configRequest', function(evt) {
-    const sessionToken = getSessionToken();
-    evt.detail.parameters['auth_token'] = sessionToken; // add a new parameter into the request
-    evt.detail.headers['Authorization'] = `Lagg ${sessionToken}`; // add a new header into the request
-});
