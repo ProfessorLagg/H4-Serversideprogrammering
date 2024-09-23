@@ -66,4 +66,7 @@
     <Build Include="Tables\AccountSession.sql" />
     <Build Include="StoredProcedures\GetAccountSessions.sql" />
   </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Script.PostDeploymentAdminUser.sql" />
+  </ItemGroup>
 </Project>

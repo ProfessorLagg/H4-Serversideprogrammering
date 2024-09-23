@@ -1,8 +1,8 @@
 ﻿CREATE TABLE [dbo].[Account]
 (
-	[Id] INT NOT NULL PRIMARY KEY,
+	[Id] INT NOT NULL PRIMARY KEY IDENTITY,
     [login] NVARCHAR(MAX) NOT NULL, 
     [CPR] NVARCHAR(MAX) NULL, 
-    [PasswordHash] CHAR(192) NOT NULL,
+    [PasswordHash] CHAR(96) NOT NULL,
 
 )

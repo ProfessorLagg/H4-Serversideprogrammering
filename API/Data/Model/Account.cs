@@ -13,5 +13,7 @@ public partial class Account
 
     public string PasswordHash { get; set; } = null!;
 
+    public virtual ICollection<AccountSession> AccountSessions { get; set; } = new List<AccountSession>();
+
     public virtual ICollection<TodoItem> TodoItems { get; set; } = new List<TodoItem>();
 }

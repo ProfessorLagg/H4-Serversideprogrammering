@@ -1,8 +1,10 @@
 ﻿CREATE TABLE [dbo].[AccountSession]
 (
-	[Id] INT NOT NULL PRIMARY KEY,
+	[Id] INT NOT NULL PRIMARY KEY IDENTITY,
     [AccountId] INT NOT NULL,
     [Active] BIT NOT NULL ,
     [Created] DATETIME NOT NULL DEFAULT GETDATE(),
-    [Expires] DATETIME NOT NULL DEFAULT GETDATE() + '01:00:00'
+    [LastAuthenticated] DATETIME NOT NULL,
+    [Token] UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(), 
+    CONSTRAINT FK_AccountSessionAccountId FOREIGN KEY ([AccountId]) REFERENCES [Account]
 )

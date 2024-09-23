@@ -8,18 +8,30 @@
 <h1 style="width: 100%;text-align: center;">Log In</h1>
 <br />
 <div id="login-form-wrap">
-
-    <form action="post" id="login-form">
+    <div id="login-form">
         <label for="username">Username</label>
         <br />
-        <input type="text">
+        <input type="text" id="input-username">
         <br />
         <label for="password">Password</label>
         <br />
-        <input type="password">
+        <input type="password" id="input-password">
         <br />
-        <input type="submit">
-    </form>
+        <input type="button" id="login-button" value="Login">
+    </div>
 </div>
-
-<script src="js/login.js" />
+<script src="js/login.js"></script>
+<script>
+    const inputUsername = document.getElementById('input-username');
+    const inputPassword = document.getElementById('input-password');
+    const loginButton = document.getElementById('login-button');
+    async function login(e) {
+        e.preventDefault();
+        console.log(e.target, "click");
+        let success = await authenticate(inputUsername.value, inputPassword.value);
+        if (success) {
+            window.location.reload();
+        }
+    }
+    loginButton.addEventListener("click", login);
+</script>
