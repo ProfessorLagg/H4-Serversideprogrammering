@@ -1,7 +1,9 @@
+using System.Security.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.EntityFrameworkCore.Design;
 using API.Data;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 namespace API {
     public class Program {
         public static void Main(string[] args) {
@@ -19,10 +21,19 @@ namespace API {
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddAuthentication();
+
             string? connectionString = builder.Configuration.GetConnectionString("Default");
             builder.Services.AddDbContext<H4serversideTodoContext>(options =>
                 options.UseSqlServer(connectionString)
             );
+
+            builder.WebHost.UseKestrel((context, serverOptions) => {
+                serverOptions
+                .Configure(context.Configuration.GetSection("Kestrel"))
+                .Endpoint("HTTPS", listenOptions => {
+                    listenOptions.HttpsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+                });
+            });
 
             var app = builder.Build();
 
@@ -32,12 +43,13 @@ namespace API {
                 app.UseSwaggerUI();
             }
 
+
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
             app.UseAuthorization();
 
 
             app.MapControllers();
+            app.UseFileServer();
 
             app.Run();
         }
