@@ -44,6 +44,7 @@ public partial class H4serversideTodoContext : DbContext {
             entity.ToTable("AccountSession");
 
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
+            entity.Property(e => e.Active).ValueGeneratedOnAdd();
             entity.Property(e => e.Created)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");

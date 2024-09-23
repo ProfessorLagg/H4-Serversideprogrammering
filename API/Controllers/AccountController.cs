@@ -20,9 +20,9 @@ namespace API.Controllers {
         private readonly H4AuthService authService;
 
 
-        public AccountController(H4serversideTodoContext dbContext, H4AuthService authService) {
+        public AccountController(H4serversideTodoContext dbContext) {
             this._dbContext = dbContext;
-            this.authService = authService;
+            this.authService = new(this._dbContext);
         }
 
         [HttpGet]

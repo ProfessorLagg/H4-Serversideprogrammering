@@ -11,10 +11,10 @@ namespace API.Controllers {
         private readonly H4serversideTodoContext _dbContext;
         private readonly IPageContentService _pageContentService;
         private readonly H4AuthService _authService;
-        public PagesController(H4serversideTodoContext dbContext, IPageContentService pageContentService, H4AuthService authService) {
+        public PagesController(H4serversideTodoContext dbContext, IPageContentService pageContentService) {
             this._dbContext = dbContext;
             this._pageContentService = pageContentService;
-            this._authService = authService;
+            this._authService = new(this._dbContext);
         }
 
         private bool IsAuthenticated(string sessionToken) {
@@ -41,7 +41,13 @@ namespace API.Controllers {
         [HttpGet("home")]
         public async Task<IActionResult> HomePage() {
             string? authHeader = Request.Headers.Authorization;
-            if (authHeader is null || !IsAuthenticated(authHeader)) { return await LoginPage(); }
+            if (authHeader is null) { return await LoginPage(); }
+            string tokenString = authHeader.Substring(authHeader.IndexOf(' ') + 1);
+            Guid token = Guid.Parse(tokenString);
+            bool validToken = await _authService.ValidateSessionToken(token);
+            if (!validToken) { return await LoginPage(); }
+
+
             return await GetPageContentResult("Home");
         }
 
