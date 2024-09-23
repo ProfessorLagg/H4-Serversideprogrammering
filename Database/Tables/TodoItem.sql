@@ -1,0 +1,7 @@
+﻿CREATE TABLE [dbo].[TodoItem]
+(
+	[Id] INT NOT NULL PRIMARY KEY, 
+    [Title] NVARCHAR(MAX) NOT NULL, 
+    [UserId] INT NOT NULL
+    CONSTRAINT FK_UserId FOREIGN KEY ([UserId]) REFERENCES [Account]
+)
