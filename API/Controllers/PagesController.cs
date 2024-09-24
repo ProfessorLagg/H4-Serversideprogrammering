@@ -55,13 +55,24 @@ namespace API.Controllers {
             Account? account = await _dbContext.Accounts.FirstOrDefaultAsync(acc => acc.Id == validateResult.Session.AccountId);
             if (account is null) { return StatusCode(500, "Could not find session account"); }
 
-            if (account.Cpr is null) { return await CprPage(); }
+            if (account.Cpr is null) { return await UpdateCprPage(); }
 
             return await GetPageContentResult("home");
         }
 
         [HttpGet("cpr")]
         public async Task<IActionResult> CprPage() {
+            // TODO Return either update or validate cpr
+            throw new NotImplementedException();
+        }
+
+        [HttpGet("inputcpr")]
+        public async Task<IActionResult> InputCprPage() {
+            return await GetPageContentResult("inputcpr");
+        }
+
+        [HttpGet("updatecpr")]
+        public async Task<IActionResult> UpdateCprPage() {
             string? authHeader = Request.Headers.Authorization;
             if (authHeader is null) { return await LoginPage(); }
             string tokenString = authHeader.Substring(authHeader.IndexOf(' ') + 1);
@@ -69,11 +80,19 @@ namespace API.Controllers {
             ValidateSessionTokenResult validateResult = await _authService.ValidateSessionToken(token);
             if (!validateResult.Valid) { return await LoginPage(); }
 
-
-
-
-            return await GetPageContentResult("cpr");
+            return await GetPageContentResult("updatecpr");
         }
 
+        [HttpGet("updatecpr")]
+        public async Task<IActionResult> ValidateCprPage() {
+            string? authHeader = Request.Headers.Authorization;
+            if (authHeader is null) { return await LoginPage(); }
+            string tokenString = authHeader.Substring(authHeader.IndexOf(' ') + 1);
+            if (!Guid.TryParse(tokenString, out Guid token)) { return await LoginPage(); }
+            ValidateSessionTokenResult validateResult = await _authService.ValidateSessionToken(token);
+            if (!validateResult.Valid) { return await LoginPage(); }
+
+            return await GetPageContentResult("validatecpr");
+        }
     }
 }

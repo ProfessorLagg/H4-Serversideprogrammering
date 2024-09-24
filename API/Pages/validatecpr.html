@@ -1,0 +1,16 @@
+<div hx-trigger="load" hx-get="/pages/inputcpr" hx-swap="outerHtml"></div>
+<script>
+    async function submitCprClick(e) {
+        console.log("click: ", e.target)
+        let success = await updateCpr(getSessionAccountId(), inputCpr.value);
+        if (success) {
+            const loc = window.location.href;
+            window.location.reload(loc);
+        }
+    }
+    submitCpr.addEventListener("click", submitCprClick);
+
+    if (getSessionToken() === undefined) {
+        logoutButton.style.display = "none";
+    }
+</script>

@@ -11,6 +11,7 @@ namespace API {
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddScoped<IHashingService, LocalHashingService>();
             builder.Services.AddScoped<IPageContentService, FilePageContentService>();
             builder.Services.AddScoped<H4AuthService>();
             builder.Services.AddControllers().AddJsonOptions(options => {
@@ -19,6 +20,7 @@ namespace API {
                 options.JsonSerializerOptions.WriteIndented = true;
 #endif
             });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
