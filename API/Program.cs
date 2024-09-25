@@ -26,16 +26,9 @@ namespace API {
             builder.Services.AddSwaggerGen();
             builder.Services.AddAuthentication();
             builder.Services.AddHttpLogging(options => {
-                options.LoggingFields =
-                    HttpLoggingFields.RequestPath
-                    | HttpLoggingFields.RequestQuery
-                    | HttpLoggingFields.RequestHeaders
-                    | HttpLoggingFields.ResponseStatusCode
-                    | HttpLoggingFields.ResponseHeaders;
-#if DEBUG
-                options.LoggingFields = options.LoggingFields | HttpLoggingFields.RequestBody | HttpLoggingFields.ResponseBody;
-#endif
+                options.LoggingFields = HttpLoggingFields.All;
             });
+            //builder.Services.AddHttpLogging(o => { });
 
             string? connectionString = builder.Configuration.GetConnectionString("Default");
             builder.Services.AddDbContext<H4serversideTodoContext>(options =>
@@ -51,6 +44,7 @@ namespace API {
             });
 
             var app = builder.Build();
+            app.UseHttpLogging();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment()) {

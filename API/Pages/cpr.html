@@ -14,4 +14,18 @@
         let newValue = formatCPR(inputCpr.value);
         inputCpr.value = newValue;
     });
+    async function submitCprClick(e) {
+        console.log("click: ", e.target)
+        let success = await postCPR(inputCpr.value);
+        if (success) {
+            const loc = window.location.href;
+            window.location.reload(loc);
+        }
+        // TODO Invalid Case
+    }
+    submitCpr.addEventListener("click", e => submitCprClick(e));
+
+    if (getSessionToken() === undefined) {
+        logoutButton.style.display = "none";
+    }
 </script>

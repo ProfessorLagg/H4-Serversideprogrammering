@@ -45,12 +45,11 @@ async function authenticate(username, password) {
 
     const authData = {
         login: username,
-        passwordHash: hashString,
+        password: hashString,
     };
 
     let response = await fetch("/account/authenticate", {
         headers: {
-            "Authentication": "Lagg " + getSessionToken(),
             "content-type": "application/json; charset=utf-8",
         },
         method: "POST",
@@ -79,19 +78,20 @@ function killSession() {
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-async function updateCpr(accountId, cpr) {
-    let url = `/Account/${accountId}/cpr/${pr}`;
+async function postCPR(cpr) {
+    let url = `/Account/cpr/${cpr}`;
     console.log("updating cpr: ", url);
     let response = await fetch(url, {
         headers: {
-            "Authentication": "Lagg " + getSessionToken(),
+            "Authorization": "Lagg " + getSessionToken(),
         },
-        method: "PUT",
+        method: "POST",
     });
 
+    if (response.status >= 400) {
+        alert(await response.text());
+        return false;
+    }
+
     return response.status === 200;
-}
-
-async function validateCpr(accountId, cpr) {
-
 }

@@ -30,7 +30,7 @@ for($i = 1; $i -lt $inLines.Count;$i++){
         PasswordHash = Get-HexString -bytes $hashBytes
     }
 }
-
+$hasher.Dispose()
 [WebClient]$client = [WebClient]::new()
 foreach($user in $users){
     $jsonString = $user | ConvertTo-Json -Compress

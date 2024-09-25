@@ -11,6 +11,8 @@ public partial class AccountSession
 
     public bool Active { get; set; }
 
+    public bool SecondFactorAuthenticated { get; set; }
+
     public DateTime Created { get; set; }
 
     public DateTime LastAuthenticated { get; set; }

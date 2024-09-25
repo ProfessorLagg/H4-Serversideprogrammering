@@ -3,6 +3,8 @@ using API.Data.Model;
 
 using Microsoft.EntityFrameworkCore;
 
+using System.Linq.Expressions;
+
 namespace API.Services {
     public class H4AuthService {
         private static readonly TimeSpan SessionLifeTime = TimeSpan.FromHours(1.0);
@@ -11,32 +13,42 @@ namespace API.Services {
             this._dbContext = databaseContext;
         }
 
-        public sealed class AuthResult {
-            public bool Found { get; set; } = false;
-            public bool Authenticated { get; set; } = false;
-            public Account? Account { get; set; } = null!;
-            public AccountSession? Session { get; set; } = null!;
+
+
+        public sealed record class ValidateSessionResult(bool Valid = false, bool Authenticated = false, AccountSession? Session = null);
+        public async Task<ValidateSessionResult> ValidateSession(string authHeader) {
+            if (string.IsNullOrWhiteSpace(authHeader)) { return new ValidateSessionResult(); }
+
+            int spaceIdx = authHeader.IndexOf(' ');
+            if (spaceIdx <= 0) { return new ValidateSessionResult(); }
+
+            string protocolString = authHeader.Substring(0, spaceIdx);
+            if (string.IsNullOrWhiteSpace(protocolString)) { return new ValidateSessionResult(); }
+            string tokenString = authHeader.Substring(spaceIdx + 1);
+            if (string.IsNullOrWhiteSpace(tokenString)) { return new ValidateSessionResult(); }
+
+            if (!Guid.TryParse(tokenString, out Guid token)) { return new ValidateSessionResult(); }
+            return await ValidateSession(token);
+        }
+        public async Task<ValidateSessionResult> ValidateSession(Guid token) {
+            //AccountSession? session = await _dbContext.AccountSessions.FirstOrDefaultAsync(x => x.Token == token && x.Active);
+            AccountSession? session = await _dbContext.AccountSessions.FirstOrDefaultAsync(x => x.Token == token);
+            if (session is null) { return new ValidateSessionResult(); }
+            if (!session.Active) { return new ValidateSessionResult(true, false, session); }
+            session.LastAuthenticated = DateTime.UtcNow;
+            var updateResult = _dbContext.Update(session);
+            await _dbContext.SaveChangesAsync();
+            return new ValidateSessionResult(true, true, updateResult.Entity);
         }
 
         public async Task<AccountSession> CreateSessionAsync(Account account) {
             AccountSession session = new();
             session.Account = account;
-            session.LastAuthenticated = DateTime.UtcNow;
+            session.Active = true;
             var addResult = await _dbContext.AccountSessions.AddAsync(session);
             _ = await _dbContext.SaveChangesAsync();
             AccountSession result = addResult.Entity;
             return result;
-        }
-
-        public sealed record class ValidateSessionTokenResult(bool Valid, AccountSession? Session);
-        public async Task<ValidateSessionTokenResult> ValidateSessionToken(Guid token) {
-            AccountSession? session = await _dbContext.AccountSessions.FirstOrDefaultAsync(x => x.Token == token && x.Active);
-            if (session is null) { return new ValidateSessionTokenResult(false, null); }
-
-            session.LastAuthenticated = DateTime.UtcNow;
-            var updateResult = _dbContext.Update(session);
-            await _dbContext.SaveChangesAsync();
-            return new ValidateSessionTokenResult(true, updateResult.Entity);
         }
         public async Task<AccountSession> GetOrCreateSessionAsync(Account account) {
             if (account == null) { throw new ArgumentNullException(nameof(account)); }
@@ -51,25 +63,22 @@ namespace API.Services {
 
             return session;
         }
+
+        public sealed record class AuthResult(bool Found, bool Authenticated, Account? Account = null, AccountSession? Session = null);
         public async Task<AuthResult> AuthenticateAsync(string login, string passwordHash) {
-            AuthResult result = new();
             Account? account = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Login == login);
             if (account is null) {
-                result.Found = false;
-                return result;
+                return new AuthResult(false, false);
             }
-            result.Found = true;
-            result.Account = account;
 
             bool passwordHashMatches = account.PasswordHash.Equals(passwordHash, StringComparison.InvariantCultureIgnoreCase);
             if (!passwordHashMatches) {
-                result.Authenticated = false;
-                return result;
+                return new AuthResult(true, false, account);
             }
-            result.Authenticated = true;
-            result.Session = await GetOrCreateSessionAsync(result.Account);
 
-            return result;
+            AccountSession session = await GetOrCreateSessionAsync(account);
+
+            return new AuthResult(true, true, account, session);
         }
     }
 }

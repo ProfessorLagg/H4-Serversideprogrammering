@@ -21,12 +21,12 @@ namespace API.Controllers {
     public sealed class AccountController : ControllerBase {
 
         private readonly H4serversideTodoContext _dbContext;
-        private readonly H4AuthService authService;
+        private readonly H4AuthService _authService;
         private readonly IHashingService _hashingService;
 
         public AccountController(H4serversideTodoContext dbContext, IHashingService hashingService) {
             this._dbContext = dbContext;
-            this.authService = new(this._dbContext);
+            this._authService = new(this._dbContext);
             this._hashingService = hashingService;
         }
 
@@ -55,7 +55,7 @@ namespace API.Controllers {
                 return BadRequest(resp);
             }
 
-            AuthResult authResult = await authService.AuthenticateAsync(request.Login, request.Password);
+            AuthResult authResult = await _authService.AuthenticateAsync(request.Login, request.Password);
             if (!authResult.Found || authResult.Account is null || !authResult.Authenticated) {
                 resp.Message = "Incorrect Username or Password";
                 return NotFound(resp); // Might be a bad idea
@@ -157,8 +157,8 @@ namespace API.Controllers {
 
             return new(true, "CPR is valid");
         }
-        [HttpPut("{accountId}/cpr/{cpr}")]
-        public async Task<IActionResult> UpdateCpr([FromRoute] int accountId, [FromRoute] string cpr) {
+
+        private async Task<IActionResult> UpdateCpr([FromRoute] int accountId, [FromRoute] string cpr) {
             Account? account = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == accountId);
             if (account is null) { return NotFound(accountId); }
 
@@ -172,22 +172,33 @@ namespace API.Controllers {
             return Ok("CPR updated succesfully");
         }
 
-        [HttpPost("{accountId}/cpr/{cpr}")]
-        public async Task<IActionResult> AuthenticateCpr([FromRoute] int accountId, [FromRoute] string cpr) {
-            Account? account = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == accountId);
-            if (account is null) { return NotFound(accountId); }
+        [HttpPost("cpr/{cpr}")]
+        public async Task<IActionResult> AuthenticateCpr([FromRoute] string cpr) {
+            string? authHeader = Request.Headers.Authorization;
+            if (authHeader is null) { return Unauthorized("Authorization header missing"); }
 
-            var validateResult = ValidateCprString(cpr);
-            if (!validateResult.Valid) { return BadRequest(validateResult.Message); }
+            ValidateSessionResult validateSessionResult = await _authService.ValidateSession(authHeader);
+            if (validateSessionResult is null || validateSessionResult.Session is null) { return StatusCode(500, "could not find session"); }
+            if (!validateSessionResult.Valid) { return Unauthorized("Authorization header invalid"); }
+
+            var validateCprResult = ValidateCprString(cpr);
+            if (!validateCprResult.Valid) { return BadRequest(validateCprResult.Message); }
 
             byte[] hashBytes = await _hashingService.GetHashAsync(cpr);
             string hashString = Convert.ToBase64String(hashBytes);
 
-            if (!hashString.Equals(account.Cpr, StringComparison.InvariantCultureIgnoreCase)) {
-                return Unauthorized("Incorrect CPR value");
+            Account? account = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == validateSessionResult.Session.AccountId);
+            if (account is null) { return StatusCode(500, "Could not find account with id matching session accountId"); }
+
+
+            if (account.Cpr is null || hashString.Equals(account.Cpr, StringComparison.InvariantCultureIgnoreCase)) {
+                account.Cpr = hashString;
+                validateSessionResult.Session.SecondFactorAuthenticated = true;
+                await _dbContext.SaveChangesAsync();
+                return Ok("CPR");
             }
 
-            return Ok("CPR valid!");
+            return Unauthorized("Incorrect CPR");
         }
     }
 }

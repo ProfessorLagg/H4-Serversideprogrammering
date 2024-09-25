@@ -5,6 +5,8 @@ using API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using System.Text;
+
 using static API.Services.H4AuthService;
 
 namespace API.Controllers {
@@ -21,20 +23,30 @@ namespace API.Controllers {
             this._authService = new(this._dbContext);
         }
 
-        private bool IsAuthenticated(string sessionToken) {
-            return true; // TODO Check for active session in DB
-        }
-        private async Task<IActionResult> GetPageContentResult(params string[] pathParts) {
-            string? pageContent = await _pageContentService.GetPageContentAsync(pathParts);
-
-            if (string.IsNullOrWhiteSpace(pageContent)) { return StatusCode(500, "Could not find login page content"); }
-
+        private ContentResult HtmlResult(string htmlString) {
             ContentResult result = new();
             result.ContentType = "text/html; charset=utf-8";
-            result.Content = pageContent;
+            result.Content = htmlString;
             result.StatusCode = 200;
 
             return result;
+        }
+        private async Task<IActionResult> GetPageContentResult(params string[] pathParts) {
+            string? pageContent = await _pageContentService.GetPageContentAsync(pathParts);
+            if (string.IsNullOrWhiteSpace(pageContent)) { return StatusCode(500, "Could not find login page content"); }
+            return HtmlResult(pageContent);
+        }
+
+        private async Task<IActionResult> ReturnIfAuthorized(Task<IActionResult> pageTask) {
+            string? authHeader = Request.Headers.Authorization;
+            if (authHeader is null) { return await LoginPage(); }
+            ValidateSessionResult validateResult = await _authService.ValidateSession(authHeader);
+            if (validateResult is null || validateResult.Session is null) { return await LoginPage(); }
+            if (!validateResult.Valid) { return await LoginPage(); }
+
+            if (!validateResult.Session.SecondFactorAuthenticated) { return await CprPage(); }
+
+            return await pageTask;
         }
 
         [HttpGet("login")]
@@ -44,55 +56,58 @@ namespace API.Controllers {
 
         [HttpGet("home")]
         public async Task<IActionResult> HomePage() {
-            string? authHeader = Request.Headers.Authorization;
-            if (authHeader is null) { return await LoginPage(); }
-            string tokenString = authHeader.Substring(authHeader.IndexOf(' ') + 1);
-            if (!Guid.TryParse(tokenString, out Guid token)) { return await LoginPage(); }
-            ValidateSessionTokenResult validateResult = await _authService.ValidateSessionToken(token);
-            if (!validateResult.Valid) { return await LoginPage(); }
-
-            if (validateResult.Session is null) { return StatusCode(500, "Could not fetch validated session"); }
-            Account? account = await _dbContext.Accounts.FirstOrDefaultAsync(acc => acc.Id == validateResult.Session.AccountId);
-            if (account is null) { return StatusCode(500, "Could not find session account"); }
-
-            if (account.Cpr is null) { return await UpdateCprPage(); }
-
-            return await GetPageContentResult("home");
+            return await ReturnIfAuthorized(GetPageContentResult("home"));
         }
 
         [HttpGet("cpr")]
         public async Task<IActionResult> CprPage() {
-            // TODO Return either update or validate cpr
-            throw new NotImplementedException();
-        }
-
-        [HttpGet("inputcpr")]
-        public async Task<IActionResult> InputCprPage() {
-            return await GetPageContentResult("inputcpr");
-        }
-
-        [HttpGet("updatecpr")]
-        public async Task<IActionResult> UpdateCprPage() {
             string? authHeader = Request.Headers.Authorization;
             if (authHeader is null) { return await LoginPage(); }
-            string tokenString = authHeader.Substring(authHeader.IndexOf(' ') + 1);
-            if (!Guid.TryParse(tokenString, out Guid token)) { return await LoginPage(); }
-            ValidateSessionTokenResult validateResult = await _authService.ValidateSessionToken(token);
+
+            ValidateSessionResult validateResult = await _authService.ValidateSession(authHeader);
+            if (validateResult is null) { throw new ArgumentNullException(nameof(validateResult)); }
             if (!validateResult.Valid) { return await LoginPage(); }
 
-            return await GetPageContentResult("updatecpr");
+            AccountSession? session = validateResult.Session;
+            if (validateResult.Session is null) { throw new ArgumentNullException(nameof(validateResult.Session)); }
+
+            Account? account = validateResult.Session.Account;
+            if (account is null) {
+                account = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == validateResult.Session.AccountId);
+                if (account is null) {
+                    throw new ArgumentNullException(nameof(validateResult.Session.Account));
+                }
+            }
+
+            return await GetPageContentResult("cpr");
         }
 
-        [HttpGet("updatecpr")]
-        public async Task<IActionResult> ValidateCprPage() {
+        [HttpGet("todo")]
+        public async Task<IActionResult> TodoItemList() {
             string? authHeader = Request.Headers.Authorization;
             if (authHeader is null) { return await LoginPage(); }
-            string tokenString = authHeader.Substring(authHeader.IndexOf(' ') + 1);
-            if (!Guid.TryParse(tokenString, out Guid token)) { return await LoginPage(); }
-            ValidateSessionTokenResult validateResult = await _authService.ValidateSessionToken(token);
+
+            ValidateSessionResult validateResult = await _authService.ValidateSession(authHeader);
+            if (validateResult is null) { throw new ArgumentNullException(nameof(validateResult)); }
             if (!validateResult.Valid) { return await LoginPage(); }
 
-            return await GetPageContentResult("validatecpr");
+            AccountSession? session = validateResult.Session;
+            if (validateResult.Session is null) { throw new ArgumentNullException(nameof(validateResult.Session)); }
+
+            Account account = (await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == validateResult.Session.AccountId))!;
+            IList<TodoItem> todoItems = _dbContext
+                .TodoItems
+                .Where(x => x.AccountId == account.Id)
+                .ToArray();
+
+            StringBuilder sb = new();
+            foreach (TodoItem todoItem in todoItems) {
+                sb.Append("<tr><td>");
+                sb.Append(todoItem.Title);
+                sb.Append("</td></tr>");
+            }
+
+            return HtmlResult(sb.ToString());
         }
     }
 }
