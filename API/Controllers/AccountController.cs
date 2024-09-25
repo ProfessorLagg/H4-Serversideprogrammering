@@ -78,6 +78,8 @@ namespace API.Controllers {
         public sealed record class CreateUserResponse(int Id, string Login);
         [HttpPost("create")]
         public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request) {
+            // TODO Authorize
+
             if (request is null) { return BadRequest(); }
             if (string.IsNullOrEmpty(request.Login)) { return BadRequest($"username cannot be null or empty"); }
             if (string.IsNullOrEmpty(request.Password)) { return BadRequest($"password cannot be null or empty"); }
@@ -158,22 +160,8 @@ namespace API.Controllers {
             return new(true, "CPR is valid");
         }
 
-        private async Task<IActionResult> UpdateCpr([FromRoute] int accountId, [FromRoute] string cpr) {
-            Account? account = await _dbContext.Accounts.FirstOrDefaultAsync(x => x.Id == accountId);
-            if (account is null) { return NotFound(accountId); }
-
-            var validateResult = ValidateCprString(cpr);
-            if (!validateResult.Valid) { return BadRequest(validateResult.Message); }
-
-            byte[] hashBytes = await _hashingService.GetHashAsync(cpr);
-            account.Cpr = Convert.ToBase64String(hashBytes);
-            var addResult = _dbContext.Accounts.Update(account);
-            await _dbContext.SaveChangesAsync();
-            return Ok("CPR updated succesfully");
-        }
-
         [HttpPost("cpr/{cpr}")]
-        public async Task<IActionResult> AuthenticateCpr([FromRoute] string cpr) {
+        public async Task<IActionResult> VerifyCPR([FromRoute] string cpr) {
             string? authHeader = Request.Headers.Authorization;
             if (authHeader is null) { return Unauthorized("Authorization header missing"); }
 
